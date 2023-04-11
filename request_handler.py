@@ -1,7 +1,7 @@
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from views import get_all_sizes, get_single_size
-from views import get_all_metals, get_single_metal
+from views import get_all_metals, get_single_metal, update_metal
 from views import get_all_styles, get_single_style
 from views import get_all_orders, get_single_order, create_order, delete_order, update_order
 
@@ -89,7 +89,7 @@ class HandleRequests(BaseHTTPRequestHandler):
         # the orange squiggle, you'll define the create_animal
         # function next.
         if resource == "orders":
-            if "sizeId" in post_body and "styleId" in post_body and "metalId" in post_body:
+            if "size_id" in post_body and "style_id" in post_body and "metal_id" in post_body:
                 self._set_headers(201)
                 new_order = create_order(post_body)
             else:
@@ -100,28 +100,30 @@ class HandleRequests(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(new_order).encode())
 
     def do_DELETE(self):
-        self._set_headers(405)
+        self._set_headers(204)
         (resource, id) = self.parse_url(self.path)
         if resource == "orders":
-            response = {"message": "Cannot Delete Order"}
+            response = delete_order(id)
 
         self.wfile.write(json.dumps(response).encode())
 
     def do_PUT(self):
-        self._set_headers(405)
+        self._set_headers(204)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
         post_body = json.loads(post_body)
-
-    # Parse the URL
         (resource, id) = self.parse_url(self.path)
+        success = False
 
-    # Delete a single animal from the list
-        if resource == "orders":
-            response = {"message": "Cannot Delete Order"}
+        if resource == "metals":
+            success = update_metal(id, post_body)
+    # rest of the elif's
 
-        self.wfile.write(json.dumps(response).encode())
-
+        if success:
+            self._set_headers(204)
+        else:
+            self._set_headers(404)
+        self.wfile.write("".encode())
     def _set_headers(self, status):
         """Sets the status code, Content-Type and Access-Control-Allow-Origin
         headers on the response
